@@ -1,12 +1,22 @@
+"""
+Main module to stack images in the lights and darks folders.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.image import imread
 from galight_modif.tools.measure_tools import search_local_max, find_loc_max
+import os
 
-folder = r"C:\Users\lauri\Desktop\SharpCap Captures\2025-07-11\M57\23_40_59"+"\\"
-img = np.array(imread(f"{folder}M57_00004.tif"))
+lights_folder = r"lights/"
+darks_folder = r"darks/"
 
-dark = np.array(imread(f"C:\Users\lauri\Desktop\SharpCap Captures\2025-07-11\M57\23_40_59\MasterDark_ISO0_0s.tif"))
+lights_paths = [f for f in os.listdir(lights_folder) if os.path.isfile(os.path.join(lights_folder, f))]
+print(lights_paths)
+input()
+img = np.array(imread(f"{lights_folder}M57_00004.tif"))
+
+
 
 gray_img = np.mean(img, axis=2)
 plt.imshow(gray_img)
