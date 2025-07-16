@@ -8,6 +8,12 @@ def combine(img_list:list) -> np.ndarray:
     imgs = np.array(img_list)
     return np.median(imgs, axis=0, out=np.ndarray(shape=img_list[0].shape, dtype=int))
 
+def stack(img_list:list, translations:list, angles:list) -> np.ndarray:
+    img_list_rot_transl = []
+    for i in range(len(img_list)):
+        img = img_list[i]
+        
+
 def make_bad_pixel_mask(master_dark:np.ndarray, threshold=30) -> np.ndarray:
     mask_rgb = master_dark<threshold
     mask = np.all(mask_rgb, axis=-1)
