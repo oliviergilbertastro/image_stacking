@@ -81,45 +81,70 @@ class ReferenceImage:
                     "\nTo save and exit, enter 'q' and press ENTER."
         )
         running = True
-        self.star_pos_list = []
+        star_pos_list = []
         while running:
             inp = input(">>> ")
             if (inp.lower())[:3] == "del":
-                coords = tuple([float(s) for s in inp[4:].split(",")])
-                self.star_pos_list.pop(self.star_pos_list.index(coords))
+                coords = np.array([float(s) for s in inp[4:].split(",")])
+                star_pos_list.pop(star_pos_list.index(coords))
                 print_color(f"Star succesfully removed from {coords}", color="red")
             elif inp == "":
-                self.show()
+                self.show(star_list=star_pos_list)
             elif inp.lower() in ["q","quit","exit"]:
                 running = False
             else:
-                coords = tuple([float(s) for s in inp.split(",")])
-                self.star_pos_list.append(coords)
+                coords = np.array([float(s) for s in inp.split(",")])
+                star_pos_list.append(coords)
                 print_color(f"Star succesfully added at {coords}", color="green")
-        print_color(f"Final star_pos_list = {self.star_pos_list}", color="orange")
+        print_color(f"Final star_pos_list = {star_pos_list}", color="magenta")
+        return star_pos_list
 
     def find_stars(self, bad_pixel_mask:np.ndarray=None, star_pos_list:list=None):
         self.found_stars = find_stars(self.light_img, bad_pixel_mask)
         self.found_rel_pos = get_stars_relative_positions(self.found_stars)
         found_lenghts = [np.array(self.found_rel_pos[i])[:,0] for i in range(len(self.found_rel_pos))]
-        print(found_lenghts)
         self.star_pos_list:list = star_pos_list if star_pos_list is not None else self.found_stars
         self.rel_pos = get_stars_relative_positions(self.star_pos_list)
-        self.given_lenghts = [np.array(self.rel_pos[i])[:,0] for i in range(len(self.rel_pos))]
+        self.rel_lenghts = [np.array(self.rel_pos[i])[:,0] for i in range(len(self.rel_pos))]
 
         # Check if all given star positions are found automatically:
         all_found = True
-        for rpos in self.given_lenghts:
-            if not np.any(np.abs(found_lenghts-rpos[0]) < 2): # Tolerance = 2 pixels
-                all_found = False
         if not all_found:
             print("Not all stars you've input are found automatically. This might cause a bad alignment if you do not change them.")
         
+    def assign_stars(self, star_pos_list:list, tolerance:float=5) -> list:
+        """
+        Returns a list of indices that correspond to the nth-star in self.star_pos_list
+        
+        e.g. If self.star_pos_list is [(24,58), (93,10)], and star_pos_list is [(25.2,56), (34.2, 29), (92.8,9)],
+             then the resulting list would be [0,2].
+        """
+        outlist = []
+        _rel_pos = get_stars_relative_positions(star_pos_list)
+        _lenghts = [np.array(_rel_pos[i])[:,0] for i in range(len(_rel_pos))]
+        for i, lengths in enumerate(self.rel_lenghts): # Iterate over each ref. star
+            # Search for a similar length in the list:
+            for k, other_lengths in enumerate(_lenghts):
+                certainty = 0
+                for length in lengths:
+                    if np.any(np.abs(other_lengths-length)/length < tolerance/100): # Tolerance is in percentage
+                        certainty += 1
+                if certainty > 1:
+                    # At least two distances are the same, we can consider the star is a match (the same)
+                    if len(outlist) > i: raise ValueError("More than a star was found to match, remove this image from alignment.")
+                    outlist.append(k)
+            if len(outlist) == i:
+                outlist.append(None)
+        return outlist
+            
+
+
     
 
-    def show(self):
+    def show(self, star_list:list=None):
+        if star_list is None: star_list = self.star_pos_list
         plt.imshow(self.light_img)
-        for i in range(len(self.star_pos_list)):
-            plt.plot(self.star_pos_list[i][0], self.star_pos_list[i][1], "o", color="red")
+        for i in range(len(star_list)):
+            plt.plot(star_list[i][0], star_list[i][1], "o", color="red")
         plt.show()
         pass

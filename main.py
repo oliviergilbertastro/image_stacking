@@ -33,19 +33,33 @@ plt.subplots_adjust(wspace=0)
 plt.show()
 
 ref_img = ReferenceImage(lights[3])
-ref_img.choose_stars()
+star_pos_list = None
+if input("Type 'Y' to select stars on reference image manually.\n") == "Y":
+    star_pos_list = ref_img.choose_stars()
+ref_img.find_stars(bad_pixel_mask=bp_mask, star_pos_list=star_pos_list) # Leave star_pos_list to None to find the stars automatically
+print(ref_img.star_pos_list)
+ref_img.show()
+outlist = ref_img.assign_stars(star_pos_list=[np.array([612., 438.]), np.array([111., 854.]), np.array([512., 269.])], tolerance=5)
+print(outlist)
 ref_img.show()
 
 all_star_pos_list = []
 all_relative_pos_list = []
+count = 0
 for s in range(len(lights)):
     stars = find_stars(lights[s], bad_pixel_mask=bp_mask)
-    print(stars)
-    relative_pos_stars = get_stars_relative_positions(stars)
-    all_star_pos_list.append(stars)
-    all_relative_pos_list.append(relative_pos_stars)
-    plt.imshow(lights[s])
-    for i in range(len(stars)):
-        print(f"{i} : {stars[i]} -> {[np.around(relative_pos_stars[i][k], decimals=2) for k in range(len(relative_pos_stars[i]))]}")
-        plt.plot(stars[i][0], stars[i][1], "o", color="red")
-    plt.show()
+    if len(stars) > 1:
+        try:
+            outlist = ref_img.assign_stars(star_pos_list=stars, tolerance=2)
+            if np.any(outlist is not None):
+                count +=1
+            print(outlist)
+        except Exception as e:
+            print(e)
+print_color(f"Final count: {count} of images to be aligned.")
+
+"""plt.imshow(lights[s])
+for i in range(len(stars)):
+    #print(f"{i} : {stars[i]} -> {[np.around(relative_pos_stars[i][k], decimals=2) for k in range(len(relative_pos_stars[i]))]}")
+    plt.plot(stars[i][0], stars[i][1], "o", color="red")
+plt.show()"""
