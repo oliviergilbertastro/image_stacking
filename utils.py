@@ -43,3 +43,21 @@ def find_loc_max(image, neighborhood_size = 8, threshold = 5):
         y_center = (dy.start + dy.stop - 1)/2    
         y.append(y_center)
     return x, y
+
+
+# Print something in the terminal in a specific color
+def print_color(message, color="yellow", **kwargs):
+    """print(), but with a color option"""
+    possible_colors = ["black","red","green","yellow","blue","magenta","cyan","white"]
+    if color == None or color == "grey":
+        color = "0"
+    elif type(color) == str:
+        color = color.lower()
+        if color in possible_colors:
+            color = str(possible_colors.index(color)+30)
+        else:
+            print(f"Color '{color}' not implemented, defaulting to grey.\nPossible colors are: {['grey']+possible_colors}")
+            color = "0"
+    else:
+        raise ValueError(f"Parameter 'header_color' needs to be a string.")
+    print(f"\x1b[{color}m{message}\x1b[0m", **kwargs)

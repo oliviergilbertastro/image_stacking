@@ -32,12 +32,18 @@ plt.tight_layout()
 plt.subplots_adjust(wspace=0)
 plt.show()
 
+ref_img = ReferenceImage(lights[3])
+ref_img.choose_stars()
+ref_img.show()
+
 all_star_pos_list = []
+all_relative_pos_list = []
 for s in range(len(lights)):
     stars = find_stars(lights[s], bad_pixel_mask=bp_mask)
     print(stars)
     relative_pos_stars = get_stars_relative_positions(stars)
     all_star_pos_list.append(stars)
+    all_relative_pos_list.append(relative_pos_stars)
     plt.imshow(lights[s])
     for i in range(len(stars)):
         print(f"{i} : {stars[i]} -> {[np.around(relative_pos_stars[i][k], decimals=2) for k in range(len(relative_pos_stars[i]))]}")
