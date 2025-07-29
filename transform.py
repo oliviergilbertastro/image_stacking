@@ -6,26 +6,42 @@ from scipy.ndimage import rotate
 import copy
 import matplotlib.pyplot as plt
 from utils import print_color
+from tqdm import tqdm
 
-def combine(img_list:list) -> np.ndarray:
+def combine(img_list:list, axis=0) -> np.ndarray:
     """Combines images into a single image"""
     imgs = np.array(img_list)
-    return np.median(imgs, axis=0, out=np.ndarray(shape=img_list[0].shape, dtype=int))
+    return np.median(imgs, axis=axis, out=np.ndarray(shape=img_list[0].shape, dtype=int))
 
 def stack(img_list:list, translations:list, angles:list) -> np.ndarray:
     img_list_rot_transl = []
-    hh, ww = img_list[0].shape
-    canvas = np.empty((ww*3, hh*3))
+    hh, ww, d = img_list[0].shape
+    print(hh, ww, d)
+    canvas = np.empty((hh*3, ww*3, d))
+    print(canvas.shape)
     origin = (hh, ww)
-    for i in range(len(img_list)):
+    for i in tqdm(range(len(img_list))):
         img = img_list[i]
         img_transl = copy.copy(canvas)
-        img_transl[hh:hh+hh, ww:ww+ww] = img
         y_transl, x_transl = origin[0]+translations[i][0], origin[1]+translations[i][1]
-        img_transl[y_transl:y_transl+hh, x_transl:x_transl+ww]
+        img_transl[int(y_transl):int(y_transl+hh), int(x_transl):int(x_transl+ww)] = img
         img_rot_transl = rotate(input=img_transl, angle=angles[i])
         img_list_rot_transl.append(img_rot_transl)
-    return combine(img_list_rot_transl)
+    return combine(img_list_rot_transl, axis=0)
+
+def stack_add(img_list:list, translations:list, angles:list) -> np.ndarray:
+    hh, ww, d = img_list[0].shape
+    canvas = np.empty((hh*5, ww*5, d))
+    print(hh, ww, d)
+    print(canvas.shape)
+    origin = (2*hh, 2*ww)
+    for i in tqdm(range(len(img_list))):
+        img = img_list[i]
+        y_transl, x_transl = origin[0]+translations[i][1], origin[1]+translations[i][0]
+        canvas[int(y_transl):int(y_transl+hh), int(x_transl):int(x_transl+ww), :] = (canvas[int(y_transl):int(y_transl+hh), int(x_transl):int(x_transl+ww), :] + img)/2
+        #plt.imshow(np.array(canvas/255, dtype=float))
+        #plt.show()
+    return np.array(canvas/255, dtype=float)
 
 
 def make_bad_pixel_mask(master_dark:np.ndarray, threshold=30) -> np.ndarray:

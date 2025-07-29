@@ -61,3 +61,9 @@ def print_color(message, color="yellow", **kwargs):
     else:
         raise ValueError(f"Parameter 'header_color' needs to be a string.")
     print(f"\x1b[{color}m{message}\x1b[0m", **kwargs)
+
+def plot_img(img, **kwargs):
+    fig, ax = plt.subplots()
+    plt.imshow(img, **kwargs)
+    plt.axis('off')
+    fig.subplots_adjust(0,0,1,1)

@@ -8,6 +8,7 @@ from matplotlib.image import imread
 import os
 from transform import *
 from tqdm import tqdm
+from utils import print_color, plot_img
 
 lights_folder = r"lights/"
 darks_folder = r"darks/"
@@ -48,11 +49,13 @@ good_light_indices = []
 good_assignations = []
 good_star_positions = []
 for s in tqdm(range(len(lights))):
+    if lights[s].shape != ref_img.light_img.shape:
+        print_color(f"image is of a bad shape: {lights[s].shape} instead of {ref_img.light_img.shape}", color="red")
     stars = find_stars(lights[s], bad_pixel_mask=bp_mask)
     if len(stars) > 1:
         try:
             outlist = ref_img.assign_stars(star_pos_list=stars, tolerance=2)
-            if np.any(outlist is not None):
+            if np.any([x is not None for x in outlist]):
                 good_light_indices.append(s)
                 good_assignations.append(outlist)
                 good_star_positions.append(stars)
@@ -61,11 +64,20 @@ for s in tqdm(range(len(lights))):
             pass
 print_color(f"Final count: {len(good_light_indices)} images ready to be aligned.")
 print(len(good_star_positions), len(good_assignations))
+
 # Calculate the translations/rotations
 ref_idx, translations, rotations = ref_img.get_translations_and_rotations(good_star_positions, good_assignations)
 print(ref_idx)
 good_lights = [lights[i] for i in good_light_indices]
-stack(good_lights, )
+stacked = stack_add(good_lights, translations, rotations)
+plot_img(stacked)
+plt.show()
+good_lights = [good_lights[i] for i in range(len(good_lights)) if ref_idx[i] == 1]
+translations = [translations[i] for i in range(len(translations)) if ref_idx[i] == 1]
+rotations = [rotations[i] for i in range(len(rotations)) if ref_idx[i] == 1]
+stacked = stack_add(good_lights, translations, rotations)
+plot_img(stacked)
+plt.show()
 
 """plt.imshow(lights[s])
 for i in range(len(stars)):
