@@ -125,9 +125,32 @@ class ReferenceImage:
                 outlist.append(None)
         return outlist
 
-    def get_translations_and_rotations(self, star_assignations:list) -> tuple[list, list]:
-        """Returns the translation and the rotation lists."""
-        pass
+    def get_translations_and_rotations(self, star_positions:list, star_assignations:list) -> tuple[list, list, list]:
+        """
+        star_positions : the list of all the positions of the stars
+        star_assignation : the list of the indices that correspond to the ref. image stars.
+        Returns the translation and the rotation lists.
+        """
+        assert len(star_positions) == len(star_assignations) # Check that they match just to be sure
+        ref_star_idx_list = []
+        transl_list = []
+        rot_list = []
+        for i in range(len(star_positions)):
+            ref_star_idx = None
+            for k in range(len(star_assignations[i])):
+                if (star_assignations[i][k] is not None) and ref_star_idx is None: # Take the first star that was recognized
+                    ref_star_idx = k
+                    this_star_idx = star_assignations[i][k]
+            try:
+                transl = np.array(self.star_pos_list[ref_star_idx]) - np.array(star_positions[i][this_star_idx])
+            except Exception as e:
+                print(e)
+                print(star_assignations[i])
+            rot = 0
+            ref_star_idx_list.append(ref_star_idx)
+            transl_list.append(transl)
+            rot_list.append(rot)
+        return ref_star_idx_list, transl_list, rot_list
 
     def show(self, star_list:list=None):
         if star_list is None: star_list = self.star_pos_list

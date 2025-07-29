@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.image import imread
 import os
 from transform import *
+from tqdm import tqdm
 
 lights_folder = r"lights/"
 darks_folder = r"darks/"
@@ -45,7 +46,8 @@ all_star_pos_list = []
 all_relative_pos_list = []
 good_light_indices = []
 good_assignations = []
-for s in range(len(lights)):
+good_star_positions = []
+for s in tqdm(range(len(lights))):
     stars = find_stars(lights[s], bad_pixel_mask=bp_mask)
     if len(stars) > 1:
         try:
@@ -53,14 +55,15 @@ for s in range(len(lights)):
             if np.any(outlist is not None):
                 good_light_indices.append(s)
                 good_assignations.append(outlist)
+                good_star_positions.append(stars)
         except Exception as e:
             #print(e)
             pass
 print_color(f"Final count: {len(good_light_indices)} images ready to be aligned.")
-
+print(len(good_star_positions), len(good_assignations))
 # Calculate the translations/rotations
-translations, rotations = ref_img.get_translations_and_rotations(good_assignations)
-
+ref_idx, translations, rotations = ref_img.get_translations_and_rotations(good_star_positions, good_assignations)
+print(ref_idx)
 good_lights = [lights[i] for i in good_light_indices]
 stack(good_lights, )
 
