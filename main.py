@@ -37,26 +37,32 @@ star_pos_list = None
 if input("Type 'Y' to select stars on reference image manually.\n") == "Y":
     star_pos_list = ref_img.choose_stars()
 ref_img.find_stars(bad_pixel_mask=bp_mask, star_pos_list=star_pos_list) # Leave star_pos_list to None to find the stars automatically
-print(ref_img.star_pos_list)
+print(f"Star pos in reference image: {ref_img.star_pos_list}")
 ref_img.show()
 outlist = ref_img.assign_stars(star_pos_list=[np.array([612., 438.]), np.array([111., 854.]), np.array([512., 269.])], tolerance=5)
-print(outlist)
-ref_img.show()
 
 all_star_pos_list = []
 all_relative_pos_list = []
-count = 0
+good_light_indices = []
+good_assignations = []
 for s in range(len(lights)):
     stars = find_stars(lights[s], bad_pixel_mask=bp_mask)
     if len(stars) > 1:
         try:
             outlist = ref_img.assign_stars(star_pos_list=stars, tolerance=2)
             if np.any(outlist is not None):
-                count +=1
-            print(outlist)
+                good_light_indices.append(s)
+                good_assignations.append(outlist)
         except Exception as e:
-            print(e)
-print_color(f"Final count: {count} of images to be aligned.")
+            #print(e)
+            pass
+print_color(f"Final count: {len(good_light_indices)} images ready to be aligned.")
+
+# Calculate the translations/rotations
+translations, rotations = ref_img.get_translations_and_rotations(good_assignations)
+
+good_lights = [lights[i] for i in good_light_indices]
+stack(good_lights, )
 
 """plt.imshow(lights[s])
 for i in range(len(stars)):

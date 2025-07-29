@@ -20,6 +20,7 @@ def stack(img_list:list, translations:list, angles:list) -> np.ndarray:
     for i in range(len(img_list)):
         img = img_list[i]
         img_transl = copy.copy(canvas)
+        img_transl[hh:hh+hh, ww:ww+ww] = img
         y_transl, x_transl = origin[0]+translations[i][0], origin[1]+translations[i][1]
         img_transl[y_transl:y_transl+hh, x_transl:x_transl+ww]
         img_rot_transl = rotate(input=img_transl, angle=angles[i])
@@ -53,19 +54,6 @@ def get_stars_relative_positions(stars_pos_list:list) -> list:
             vec = stars_pos_list[(k+i+1)%len(stars_pos_list)]-stars_pos_list[i]
             relative_positions_list[-1].append((np.linalg.norm(vec), np.arctan2(vec[1],vec[0])))
     return relative_positions_list
-
-def associate_stars(all_relative_stars_pos_list:list, tolerance:float=0.05) -> list:
-    """From the relative positions between each star in each image, create a list of all the different stars and find the ones imaged more than once."""
-
-    associated_dict = {}
-    # Go through every image
-    for nth_light in range(len(all_relative_stars_pos_list)):
-        # Go through every star in this image
-        for nth_star in range(len(all_relative_stars_pos_list[nth_light])):
-            # Go through every image to try and find if the same star is in there
-            print()
-
-    pass
 
 class ReferenceImage:
     """Light image that is sharp and contains star positions."""
@@ -136,10 +124,10 @@ class ReferenceImage:
             if len(outlist) == i:
                 outlist.append(None)
         return outlist
-            
 
-
-    
+    def get_translations_and_rotations(self, star_assignations:list) -> tuple[list, list]:
+        """Returns the translation and the rotation lists."""
+        pass
 
     def show(self, star_list:list=None):
         if star_list is None: star_list = self.star_pos_list
