@@ -13,7 +13,27 @@ def combine(img_list:list, axis=0) -> np.ndarray:
     imgs = np.array(img_list)
     return np.median(imgs, axis=axis, out=np.ndarray(shape=img_list[0].shape, dtype=int))
 
-def stack(img_list:list, translations:list, angles:list) -> np.ndarray:
+def transform_fn(x:float|np.ndarray, y:float|np.ndarray, theta:float, shape:tuple) -> tuple :
+    height, width = shape
+    theta = theta - np.floor(theta / (2*np.pi))*2*np.pi # Make it so theta is between 0 and 2*np.pi
+    if theta <= np.pi/2:
+        x_ = x*np.cos(theta)+y*np.sin(theta)
+        y_ = y*np.cos(theta)-x*np.sin(theta)+width*np.sin(theta)
+    elif (theta > np.pi/2) and (theta <= np.pi):
+        x_ = x*np.cos(theta)+y*np.sin(theta)+width*np.sin(theta-np.pi/2)
+        y_ = y*np.cos(theta)-x*np.sin(theta)+width*np.sin(theta)+height*np.sin(theta-np.pi/2)
+    elif (theta > np.pi) and (theta <= 3*np.pi/2):
+        x_ = x*np.cos(theta)+y*np.sin(theta)+width*np.cos(theta-np.pi)+height*np.sin(theta-np.pi)
+        y_ = y*np.cos(theta)-x*np.sin(theta)+height*np.cos(theta-np.pi)
+    else:
+        x_ = x*np.cos(theta)+y*np.sin(theta)+height*np.cos(theta-3*np.pi/2)
+        y_ = y*np.cos(theta)-x*np.sin(theta)
+    return (x_, y_)
+
+def stack(img_list:list, translations:list, angles:list, align_pos:list) -> np.ndarray:
+    """
+    align_pos : list of the positions of the alignment stars used to calculate the translation and the angle
+    """
     img_list_rot_transl = []
     hh, ww, d = img_list[0].shape
     print(hh, ww, d)
@@ -23,9 +43,16 @@ def stack(img_list:list, translations:list, angles:list) -> np.ndarray:
     for i in tqdm(range(len(img_list))):
         img = img_list[i]
         img_transl = copy.copy(canvas)
+        # Shift to correct for the translation
         y_transl, x_transl = origin[0]+translations[i][0], origin[1]+translations[i][1]
-        img_transl[int(y_transl):int(y_transl+hh), int(x_transl):int(x_transl+ww)] = img
-        img_rot_transl = rotate(input=img_transl, angle=angles[i])
+        #           img_transl[int(y_transl):int(y_transl+hh), int(x_transl):int(x_transl+ww)] = img
+        # Rotate
+        img_rot = rotate(input=img, angle=angles[i]/np.pi*360)
+        new_pos = transform_fn(*(align_pos[i]), theta=angles[i], shape=(hh,ww))
+        # Re-shift to correct for the rotation
+        rotation_translation = np.array(new_pos) - np.array(align_pos[i])
+        y_transl, x_transl = origin[0]+translation[1], origin[1]+translation[0]
+        img_rot_transl[int(y_transl):int(y_transl+hh), int(x_transl):int(x_transl+ww)] = img_rot_transl
         img_list_rot_transl.append(img_rot_transl)
     return combine(img_list_rot_transl, axis=0)
 
