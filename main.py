@@ -41,12 +41,14 @@ if input("Type 'Y' to select stars on reference image manually.\n") == "Y":
 ref_img.find_stars(bad_pixel_mask=bp_mask, star_pos_list=star_pos_list) # Leave star_pos_list to None to find the stars automatically
 print(f"Star pos in reference image: {ref_img.star_pos_list}")
 ref_img.show()
-outlist = ref_img.assign_stars(star_pos_list=[np.array([612., 438.]), np.array([111., 854.]), np.array([512., 269.])], tolerance=5)
+outlist, angle_outlist = ref_img.assign_stars(star_pos_list=[np.array([612., 438.]), np.array([111., 854.]), np.array([512., 269.])], tolerance=5)
+
 
 all_star_pos_list = []
 all_relative_pos_list = []
 good_light_indices = []
 good_assignations = []
+good_angles= []
 good_star_positions = []
 for s in tqdm(range(len(lights))):
     if lights[s].shape != ref_img.light_img.shape:
@@ -54,22 +56,24 @@ for s in tqdm(range(len(lights))):
     stars = find_stars(lights[s], bad_pixel_mask=bp_mask)
     if len(stars) > 1:
         try:
-            outlist = ref_img.assign_stars(star_pos_list=stars, tolerance=2)
+            outlist, angle_outlist = ref_img.assign_stars(star_pos_list=stars, tolerance=2)
             if np.any([x is not None for x in outlist]):
                 good_light_indices.append(s)
                 good_assignations.append(outlist)
+                good_angles.append(angle_outlist)
                 good_star_positions.append(stars)
         except Exception as e:
             #print(e)
             pass
-print_color(f"Final count: {len(good_light_indices)} images ready to be aligned.")
+print_color(f"Final count: {len(good_light_indices)} images ready to be aligned. First is {good_light_indices[0]}")
 print(len(good_star_positions), len(good_assignations))
 
 # Calculate the translations/rotations
-ref_idx, translations, rotations = ref_img.get_translations_and_rotations(good_star_positions, good_assignations)
+ref_idx, translations, rotations = ref_img.get_translations_and_rotations(good_star_positions, good_assignations, good_angles)
 print(ref_idx)
+align_pos_list = [(good_star_positions[i])[ref] for i, ref in enumerate(ref_idx)]
 good_lights = [lights[i] for i in good_light_indices]
-stacked = stack_add(good_lights, translations, rotations)
+stacked = stack(good_lights, translations, rotations, align_pos_list)
 plot_img(stacked)
 plt.show()
 good_lights = [good_lights[i] for i in range(len(good_lights)) if ref_idx[i] == 1]

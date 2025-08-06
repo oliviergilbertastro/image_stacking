@@ -14,7 +14,7 @@ lights = [np.array(imread(f"{lights_folder}{lights_paths[i]}")) for i in range(l
 darks = [np.array(imread(f"{darks_folder}{darks_paths[i]}")) for i in range(len(darks_paths))]
 
 img_unrotated = lights[0]
-ANGLE = 300-360
+ANGLE = -25
 img_rotated = rotate(input=img_unrotated, angle=ANGLE, reshape=True)
 
 def transform_fn(x:float|np.ndarray, y:float|np.ndarray, theta:float, shape:tuple) -> tuple :
@@ -34,13 +34,23 @@ def transform_fn(x:float|np.ndarray, y:float|np.ndarray, theta:float, shape:tupl
         y_ = y*np.cos(theta)-x*np.sin(theta)
     return (x_, y_)
 
+dots_x = []
+dots_y = []
+dots_c = []
+dots_y_temp = np.linspace(img_unrotated.shape[0]*0.1, img_unrotated.shape[0]*0.9, 15)
+for i in range(15):
+    dots_x += list(np.linspace(img_unrotated.shape[1]*0.1, img_unrotated.shape[1]*0.9, 15))
+    dots_y += [dots_y_temp[i] for k in range(15)]
+    dots_c += [i*15+k for k in range(15)]
 
 ax1 = plt.subplot(121)
 ax2 = plt.subplot(122)#, sharex=ax1, sharey=ax1)
 ax1.imshow(img_unrotated, origin="lower")
 ax2.imshow(img_rotated, origin="lower")
 pos = (500,400)
-ax1.plot(pos[0],pos[1], marker="o", color="red", ls="None")
-pos_ = transform_fn(*pos, theta=ANGLE/180*np.pi, shape=img_unrotated.shape[:2])
-ax2.plot(pos_[0],pos_[1], marker="o", color="red", ls="None")
+#ax1.plot(pos[0],pos[1], marker="o", color="red", ls="None")
+ax1.scatter(dots_x, dots_y, c=dots_c, ls="None", marker=".")
+pos_ = transform_fn(np.array(dots_x), np.array(dots_y), theta=ANGLE/180*np.pi, shape=img_unrotated.shape[:2])
+ax2.scatter(pos_[0], pos_[1], c=dots_c, ls="None", marker=".")
+#ax2.plot(pos_[0],pos_[1], marker="o", color="red", ls="None")
 plt.show()
